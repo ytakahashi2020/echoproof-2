@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:; base-uri 'none'; form-action 'none'">
+<meta charset="utf-8">
+<title>EchoProof</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
+body{width:1280px;height:720px;background:#0f1724;color:#e6edf3;overflow:hidden;}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 28px;background:#111c2e;border-bottom:1px solid #203049;}
+header h1{font-size:22px;color:#9945FF;}
+header p{font-size:12px;color:#8aa0b8;}
+.wallet{background:#1a2b45;padding:8px 16px;border-radius:20px;font-size:14px;color:#14F195;font-weight:bold;}
+main{display:flex;gap:16px;padding:18px 24px;}
+.panel{background:#131f33;border:1px solid #223450;border-radius:12px;padding:16px;}
+.col1,.col3{width:320px;}
+.col2{flex:1;}
+h2{font-size:15px;margin-bottom:12px;color:#c9d6e3;}
+button{background:linear-gradient(90deg,#9945FF,#14F195);border:none;color:#0f1724;font-weight:bold;padding:9px 14px;border-radius:8px;cursor:pointer;font-size:13px;width:100%;margin-top:8px;}
+button:hover{opacity:0.9;}
+.hidden{display:none;}
+.readings{margin-top:10px;font-size:13px;background:#0f1a2c;padding:10px;border-radius:8px;line-height:1.6;}
+.status{margin-top:10px;font-size:13px;color:#14F195;font-weight:bold;min-height:18px;}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(4,1fr);gap:8px;height:280px;margin-top:8px;}
+.cell{background:#1a2b45;border-radius:6px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#6d84a0;}
+.cell.covered{background:#163a2f;color:#14F195;}
+.cell.selected{border-color:#9945FF;}
+.coverage{font-size:13px;color:#8aa0b8;margin-top:10px;}
+.dataset{margin-top:10px;font-size:13px;background:#0f1a2c;padding:10px;border-radius:8px;line-height:1.6;}
+footer{position:fixed;bottom:6px;left:24px;font-size:11px;color:#55657c;}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>EchoProof</h1>
+    <p>Crowdsourced, verifiable environmental sensing rewarded on Solana</p>
+  </div>
+  <div class="wallet" data-demo="wallet-balance">12.50 SOL</div>
+</header>
+<main>
+  <div class="panel col1">
+    <h2>📱 Contribute Data</h2>
+    <button data-demo="capture-btn" onclick="capture()">Capture Sensor Data</button>
+    <div class="readings hidden" data-demo="sensor-readings" id="readings">
+      Noise: 62 dB<br>GPS: 35.681, 139.767<br>Light: 310 lux
+    </div>
+    <button data-demo="submit-btn" onclick="submitProof()">Submit Proof to Solana</button>
+    <div class="status" data-demo="proof-status" id="proofStatus"></div>
+  </div>
+
+  <div class="panel col2">
+    <h2>🗺️ Coverage Map</h2>
+    <div class="grid" id="grid"></div>
+    <div class="coverage" data-demo="coverage-count" id="coverage">Coverage: 128 verified regions</div>
+  </div>
+
+  <div class="panel col3">
+    <h2>🏙️ Data Marketplace</h2>
+    <p style="font-size:12px;color:#8aa0b8;">Click a green region on the map to inspect its dataset.</p>
+    <div class="dataset hidden" data-demo="dataset-panel" id="datasetPanel">
+      <b>Region: Shibuya-12</b><br>
+      Type: Noise + GPS<br>
+      Samples: 3,204<br>
+      Price: 2.0 SOL
+    </div>
+    <button data-demo="buy-btn" onclick="buyDataset()" id="buyBtn" style="display:none;">Buy Dataset Access</button>
+    <div class="status" data-demo="purchase-status" id="purchaseStatus"></div>
+  </div>
+</main>
+<footer>Prototype — all data is simulated</footer>
+
+<script>
+const grid = document.getElementById('grid');
+for(let i=1;i<=20;i++){
+  const c = document.createElement('div');
+  c.className = 'cell' + (i%3===0 ? ' covered' : '');
+  c.textContent = i%3===0 ? '✓' : '';
+  c.setAttribute('data-demo','map-cell-'+i);
+  c.onclick = () => selectCell(c);
+  grid.appendChild(c);
+}
+
+function capture(){
+  document.getElementById('readings').classList.remove('hidden');
+}
+
+let balance = 12.50;
+let coverage = 128;
+function submitProof(){
+  document.getElementById('proofStatus').textContent = '✅ Verified on Solana — +0.05 SOL earned';
+  balance += 0.05;
+  coverage += 1;
+  document.querySelector('[data-demo="wallet-balance"]').textContent = balance.toFixed(2) + ' SOL';
+  document.getElementById('coverage').textContent = 'Coverage: ' + coverage + ' verified regions';
+  const cells = document.querySelectorAll('.cell');
+  for(const c of cells){
+    if(!c.classList.contains('covered')){
+      c.classList.add('covered');
+      c.textContent = '✓';
+      break;
+    }
+  }
+}
+
+function selectCell(el){
+  document.querySelectorAll('.cell').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('datasetPanel').classList.remove('hidden');
+  document.getElementById('buyBtn').style.display = 'block';
+  document.getElementById('purchaseStatus').textContent = '';
+}
+
+function buyDataset(){
+  balance -= 2.0;
+  document.querySelector('[data-demo="wallet-balance"]').textContent = balance.toFixed(2) + ' SOL';
+  document.getElementById('purchaseStatus').textContent = '✅ Access granted — paid via Solana Pay';
+}
+</script>
+</body>
+</html>
